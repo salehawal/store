@@ -2,10 +2,11 @@
  {
   "doctype": "Store Product",
   "product_name": "Wireless Bluetooth Headphones",
-  "description": "Premium noise-cancelling wireless headphones with 30-hour battery life. crystal-clear audio and deep bass for an immersive listening experience.",
+  "description": "Premium noise-cancelling wireless headphones with 30-hour battery life. Crystal-clear audio and deep bass for an immersive listening experience.",
   "price": 79.99,
   "stock_quantity": 50,
-  "is_available": 1
+  "is_available": 1,
+  "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=400&fit=crop"
  },
  {
   "doctype": "Store Product",
@@ -13,7 +14,8 @@
   "description": "Handpicked organic green tea from the mountains of Japan. 20 tea bags per box. Rich in antioxidants and naturally caffeine-light.",
   "price": 12.49,
   "stock_quantity": 120,
-  "is_available": 1
+  "is_available": 1,
+  "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=600&h=400&fit=crop"
  },
  {
   "doctype": "Store Product",
@@ -21,7 +23,8 @@
   "description": "Adjustable lumbar support, breathable mesh back, and premium cushioning. Designed for all-day comfort in your home office.",
   "price": 299.00,
   "stock_quantity": 15,
-  "is_available": 1
+  "is_available": 1,
+  "image": "https://images.unsplash.com/photo-1592078615290-033ee584e267?w=600&h=400&fit=crop"
  },
  {
   "doctype": "Store Product",
@@ -29,7 +32,8 @@
   "description": "Double-wall vacuum insulated. Keeps drinks cold for 24 hours or hot for 12 hours. 750ml capacity. BPA-free.",
   "price": 24.99,
   "stock_quantity": 200,
-  "is_available": 1
+  "is_available": 1,
+  "image": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&h=400&fit=crop"
  },
  {
   "doctype": "Store Product",
@@ -37,7 +41,8 @@
   "description": "Touch-controlled with 5 brightness levels and 3 color temperatures. Built-in USB charging port and adjustable gooseneck.",
   "price": 45.00,
   "stock_quantity": 80,
-  "is_available": 1
+  "is_available": 1,
+  "image": "https://images.unsplash.com/photo-1507473885765-e6ed057ab6fe?w=600&h=400&fit=crop"
  },
  {
   "doctype": "Store Product",
@@ -45,7 +50,8 @@
   "description": "Vintage-style waxed canvas backpack with padded laptop compartment. Spacious main compartment with multiple organizer pockets.",
   "price": 59.99,
   "stock_quantity": 35,
-  "is_available": 1
+  "is_available": 1,
+  "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=400&fit=crop"
  },
  {
   "doctype": "Store Product",
@@ -53,7 +59,8 @@
   "description": "Hot-swappable switches, per-key RGB backlighting, and a compact 75% layout. Gateron Brown switches included. USB-C detachable cable.",
   "price": 89.99,
   "stock_quantity": 40,
-  "is_available": 1
+  "is_available": 1,
+  "image": "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600&h=400&fit=crop"
  },
  {
   "doctype": "Store Product",
@@ -61,6 +68,7 @@
   "description": "6mm thick eco-friendly TPE yoga mat. Non-slip textured surface on both sides. Includes carrying strap. Perfect for home workouts.",
   "price": 34.99,
   "stock_quantity": 60,
-  "is_available": 1
+  "is_available": 1,
+  "image": "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=600&h=400&fit=crop"
  }
 ]
