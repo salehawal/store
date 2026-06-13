@@ -1,6 +1,7 @@
 frappe.ready(function () {
     // Shopping cart in session storage
     let cart = JSON.parse(sessionStorage.getItem("store_cart") || "[]");
+    let isCheckoutMode = false;
 
     function saveCart() {
         sessionStorage.setItem("store_cart", JSON.stringify(cart));
@@ -31,19 +32,65 @@ frappe.ready(function () {
             saveCart();
             frappe.msgprint({ title: __("Added to Cart"), message: __("{0} added to cart", [product.product_name]), indicator: "green" });
             renderCart();
+            updateCheckoutUI();
         });
     });
 
-    // Render cart sidebar / dropdown
+    // Toggle checkout mode
+    function enterCheckoutMode() {
+        isCheckoutMode = true;
+        updateCheckoutUI();
+    }
+
+    function exitCheckoutMode() {
+        isCheckoutMode = false;
+        updateCheckoutUI();
+    }
+
+    function updateCheckoutUI() {
+        const checkoutSection = document.getElementById("checkout-section");
+        const proceedBtn = document.getElementById("btn-proceed-checkout");
+        if (!checkoutSection || !proceedBtn) return;
+
+        const hasItems = cart.length > 0;
+
+        if (!hasItems) {
+            checkoutSection.style.display = "none";
+            proceedBtn.style.display = "none";
+            return;
+        }
+
+        if (isCheckoutMode) {
+            checkoutSection.style.display = "block";
+            proceedBtn.style.display = "none";
+            // Pre-fill customer info from session
+            const nameEl = document.getElementById("customer_name");
+            const emailEl = document.getElementById("customer_email");
+            if (nameEl && emailEl) {
+                nameEl.value = sessionStorage.getItem("store_customer_name") || "";
+                emailEl.value = sessionStorage.getItem("store_customer_email") || "";
+            }
+        } else {
+            checkoutSection.style.display = "none";
+            proceedBtn.style.display = "block";
+        }
+    }
+
+    // Render cart sidebar
     function renderCart() {
         const container = document.getElementById("cart-items");
         if (!container) return;
+
         if (cart.length === 0) {
             container.innerHTML = '<p class="text-muted text-center my-4">' + __("Your cart is empty") + "</p>";
             document.getElementById("cart-total-amount").textContent = "$0.00";
             document.getElementById("btn-place-order")?.setAttribute("disabled", "disabled");
+            document.getElementById("btn-proceed-checkout").style.display = "none";
+            document.getElementById("checkout-section").style.display = "none";
+            isCheckoutMode = false;
             return;
         }
+
         let html = "";
         let total = 0;
         cart.forEach((item, idx) => {
@@ -62,7 +109,13 @@ frappe.ready(function () {
         });
         container.innerHTML = html;
         document.getElementById("cart-total-amount").textContent = `$${total.toFixed(2)}`;
-        document.getElementById("btn-place-order")?.removeAttribute("disabled");
+
+        // Enable/disable place order button based on checkout state
+        if (isCheckoutMode) {
+            document.getElementById("btn-place-order")?.removeAttribute("disabled");
+        } else {
+            document.getElementById("btn-place-order")?.setAttribute("disabled", "disabled");
+        }
 
         document.querySelectorAll(".btn-remove-cart").forEach((btn) => {
             btn.addEventListener("click", function () {
@@ -70,16 +123,21 @@ frappe.ready(function () {
                 cart.splice(idx, 1);
                 saveCart();
                 renderCart();
+                updateCheckoutUI();
             });
         });
     }
 
-    // Customer form prefill
-    const nameEl = document.getElementById("customer_name");
-    const emailEl = document.getElementById("customer_email");
-    if (nameEl && emailEl) {
-        nameEl.value = sessionStorage.getItem("store_customer_name") || "";
-        emailEl.value = sessionStorage.getItem("store_customer_email") || "";
+    // Proceed to Checkout
+    const proceedBtn = document.getElementById("btn-proceed-checkout");
+    if (proceedBtn) {
+        proceedBtn.addEventListener("click", enterCheckoutMode);
+    }
+
+    // Back to Cart
+    const backBtn = document.getElementById("btn-back-to-cart");
+    if (backBtn) {
+        backBtn.addEventListener("click", exitCheckoutMode);
     }
 
     // Place order
@@ -121,8 +179,10 @@ frappe.ready(function () {
                             indicator: "green",
                         });
                         cart = [];
+                        isCheckoutMode = false;
                         saveCart();
                         renderCart();
+                        updateCheckoutUI();
                     } else {
                         frappe.msgprint({ title: __("Error"), message: r.message?.error || __("Something went wrong."), indicator: "red" });
                     }
@@ -133,4 +193,5 @@ frappe.ready(function () {
 
     renderCart();
     updateCartBadge();
+    updateCheckoutUI();
 });

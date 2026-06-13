@@ -187,6 +187,57 @@
     box-shadow: none;
 }
 
+/* --- Proceed to Checkout Button --- */
+#btn-proceed-checkout {
+    background: linear-gradient(135deg, #059669, #047857);
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1.25rem;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: 0 4px 12px rgba(5,150,105,0.25);
+}
+#btn-proceed-checkout:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(5,150,105,0.3);
+}
+#btn-proceed-checkout:active {
+    transform: translateY(0);
+}
+
+/* --- Checkout Section --- */
+#checkout-section {
+    animation: fadeSlideIn 0.3s ease;
+}
+#checkout-section h6 {
+    color: #111827;
+}
+#btn-back-to-cart {
+    border-radius: 8px;
+    padding: 0.35rem 0.6rem;
+    border-color: #d1d5db;
+    color: #6b7280;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+#btn-back-to-cart:hover {
+    color: #374151;
+    border-color: #9ca3af;
+    background: #f9fafb;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 /* --- Remove Cart Item Button --- */
 .btn-remove-cart {
     border-radius: 50%;
