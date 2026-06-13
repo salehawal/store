@@ -1,0 +1,219 @@
+/* ============================================
+   Store App - Global Styles
+   ============================================ */
+
+/* --- CSS Custom Properties --- */
+:root {
+    --store-primary: #4f46e5;
+    --store-primary-dark: #4338ca;
+    --store-primary-light: #818cf8;
+    --store-primary-bg: #eef2ff;
+    --store-accent: #f59e0b;
+    --store-bg: #f8fafc;
+    --store-card-bg: #ffffff;
+    --store-text: #1e293b;
+    --store-text-muted: #64748b;
+    --store-border: #e2e8f0;
+    --store-success: #10b981;
+    --store-warning: #f59e0b;
+    --store-danger: #ef4444;
+    --store-radius: 12px;
+    --store-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --store-shadow-lg: 0 10px 25px rgba(0,0,0,0.08);
+    --store-transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* --- Base Overrides for Store Pages --- */
+.store-page .page-wrapper {
+    background: var(--store-bg);
+}
+
+.store-page .page-content {
+    padding: 0;
+    max-width: 100%;
+}
+
+/* --- Common Button Styles --- */
+.store-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 100px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--store-transition);
+    text-decoration: none;
+}
+
+.store-btn-primary {
+    background: var(--store-primary);
+    color: white;
+}
+
+.store-btn-primary:hover {
+    background: var(--store-primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--store-shadow-lg);
+}
+
+.store-btn-secondary {
+    background: var(--store-card-bg);
+    color: var(--store-text);
+    border: 2px solid var(--store-border);
+}
+
+.store-btn-secondary:hover {
+    border-color: var(--store-primary);
+    color: var(--store-primary);
+}
+
+.store-btn-danger {
+    background: transparent;
+    color: var(--store-danger);
+    border: 2px solid var(--store-border);
+}
+
+.store-btn-danger:hover {
+    border-color: var(--store-danger);
+    background: #fef2f2;
+}
+
+/* --- Form Styles --- */
+.store-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--store-border);
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    color: var(--store-text);
+    background: var(--store-card-bg);
+    transition: var(--store-transition);
+    font-family: inherit;
+}
+
+.store-input:focus {
+    outline: none;
+    border-color: var(--store-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.store-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--store-border);
+    border-radius: 8px;
+    font-size: 0.9375rem;
+    color: var(--store-text);
+    background: var(--store-card-bg);
+    transition: var(--store-transition);
+    font-family: inherit;
+    resize: vertical;
+    min-height: 60px;
+}
+
+.store-textarea:focus {
+    outline: none;
+    border-color: var(--store-primary);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+/* --- Status Badges --- */
+.store-status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.store-status-badge.Confirmed,
+.store-status-badge.Delivered {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.store-status-badge.Processing {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.store-status-badge.Shipped {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.store-status-badge.Cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.store-status-badge.Draft {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+/* --- Animations --- */
+@keyframes storeFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes storeFadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes storeScaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.store-fade-in {
+    animation: storeFadeIn 0.4s ease;
+}
+
+/* --- Toast --- */
+.store-toast {
+    position: fixed;
+    bottom: 32px;
+    right: 32px;
+    background: var(--store-text);
+    color: white;
+    padding: 16px 24px;
+    border-radius: var(--store-radius);
+    box-shadow: var(--store-shadow-lg);
+    font-weight: 500;
+    transform: translateY(120%);
+    opacity: 0;
+    transition: var(--store-transition);
+    z-index: 9999;
+}
+
+.store-toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* --- Scrollbar --- */
+.store-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+
+.store-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.store-scroll::-webkit-scrollbar-thumb {
+    background: var(--store-border);
+    border-radius: 3px;
+}
+
+.store-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--store-text-muted);
+}
