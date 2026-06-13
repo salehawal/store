@@ -191,6 +191,37 @@ frappe.ready(function () {
         });
     }
 
+    // Mobile cart toggle
+    function toggleCart() {
+        const column = document.getElementById("cart-column");
+        const overlay = document.getElementById("cart-overlay");
+        const closeBtn = document.getElementById("btn-cart-close");
+        if (!column) return;
+        const isOpen = column.classList.contains("cart-open");
+        if (isOpen) {
+            column.classList.remove("cart-open");
+            if (overlay) overlay.style.display = "none";
+            if (closeBtn) closeBtn.style.display = "none";
+        } else {
+            column.classList.add("cart-open");
+            if (overlay) overlay.style.display = "block";
+            if (closeBtn) closeBtn.style.display = "inline-flex";
+        }
+    }
+
+    const cartToggle = document.getElementById("btn-cart-toggle");
+    if (cartToggle) {
+        cartToggle.addEventListener("click", toggleCart);
+    }
+    const cartClose = document.getElementById("btn-cart-close");
+    if (cartClose) {
+        cartClose.addEventListener("click", toggleCart);
+    }
+    const cartOverlay = document.getElementById("cart-overlay");
+    if (cartOverlay) {
+        cartOverlay.addEventListener("click", toggleCart);
+    }
+
     renderCart();
     updateCartBadge();
     updateCheckoutUI();
