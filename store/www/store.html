@@ -1,3 +1,11 @@
+{% extends "templates/web.html" %}
+
+{% block style %}
+{{ super() }}
+<link type="text/css" rel="stylesheet" href="/assets/store/css/store.css">
+{% endblock %}
+
+{% block page_content %}
 <!-- Store Page - /store -->
 <section class="store-page">
     <!-- Header -->
@@ -102,3 +110,9 @@
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<script src="/assets/store/js/store.js"></script>
+{% endblock %}
