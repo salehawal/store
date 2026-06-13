@@ -1,2 +1,0 @@
-# Frappe is provided by the bench environment — do not list it here
-# List only third-party packages your app depends on:
