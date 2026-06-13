@@ -1,0 +1,66 @@
+[
+ {
+  "doctype": "Store Product",
+  "product_name": "Wireless Bluetooth Headphones",
+  "description": "Premium noise-cancelling wireless headphones with 30-hour battery life. crystal-clear audio and deep bass for an immersive listening experience.",
+  "price": 79.99,
+  "stock_quantity": 50,
+  "is_available": 1
+ },
+ {
+  "doctype": "Store Product",
+  "product_name": "Organic Green Tea Box",
+  "description": "Handpicked organic green tea from the mountains of Japan. 20 tea bags per box. Rich in antioxidants and naturally caffeine-light.",
+  "price": 12.49,
+  "stock_quantity": 120,
+  "is_available": 1
+ },
+ {
+  "doctype": "Store Product",
+  "product_name": "Ergonomic Office Chair",
+  "description": "Adjustable lumbar support, breathable mesh back, and premium cushioning. Designed for all-day comfort in your home office.",
+  "price": 299.00,
+  "stock_quantity": 15,
+  "is_available": 1
+ },
+ {
+  "doctype": "Store Product",
+  "product_name": "Stainless Steel Water Bottle",
+  "description": "Double-wall vacuum insulated. Keeps drinks cold for 24 hours or hot for 12 hours. 750ml capacity. BPA-free.",
+  "price": 24.99,
+  "stock_quantity": 200,
+  "is_available": 1
+ },
+ {
+  "doctype": "Store Product",
+  "product_name": "Smart LED Desk Lamp",
+  "description": "Touch-controlled with 5 brightness levels and 3 color temperatures. Built-in USB charging port and adjustable gooseneck.",
+  "price": 45.00,
+  "stock_quantity": 80,
+  "is_available": 1
+ },
+ {
+  "doctype": "Store Product",
+  "product_name": "Canvas Backpack",
+  "description": "Vintage-style waxed canvas backpack with padded laptop compartment. Spacious main compartment with multiple organizer pockets.",
+  "price": 59.99,
+  "stock_quantity": 35,
+  "is_available": 1
+ },
+ {
+  "doctype": "Store Product",
+  "product_name": "Mechanical Keyboard",
+  "description": "Hot-swappable switches, per-key RGB backlighting, and a compact 75% layout. Gateron Brown switches included. USB-C detachable cable.",
+  "price": 89.99,
+  "stock_quantity": 40,
+  "is_available": 1
+ },
+ {
+  "doctype": "Store Product",
+  "product_name": "Yoga Mat Premium",
+  "description": "6mm thick eco-friendly TPE yoga mat. Non-slip textured surface on both sides. Includes carrying strap. Perfect for home workouts.",
+  "price": 34.99,
+  "stock_quantity": 60,
+  "is_available": 1
+ }
+]
