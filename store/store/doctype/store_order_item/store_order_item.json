@@ -1,7 +1,7 @@
 {
  "doctype": "DocType",
  "name": "Store Order Item",
- "module": "Store App",
+ "module": "Store",
  "custom": 0,
  "istable": 1,
  "fields": [

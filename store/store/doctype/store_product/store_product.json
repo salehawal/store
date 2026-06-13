@@ -1,7 +1,7 @@
 {
  "doctype": "DocType",
  "name": "Store Product",
- "module": "Store App",
+ "module": "Store",
  "custom": 0,
  "autoname": "field:product_name",
  "fields": [

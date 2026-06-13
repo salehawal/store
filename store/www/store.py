@@ -71,5 +71,5 @@ def place_order(customer_name, customer_email, items, phone=None, address=None):
         return {"status": "ok", "order_name": order_doc.name}
 
     except Exception as e:
-        frappe.log_error(f"Store order creation failed: {e}", "Store App")
+        frappe.log_error(f"Store order creation failed: {e}", "Store")
         return {"status": "error", "error": str(e)}
