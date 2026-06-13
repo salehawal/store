@@ -6,7 +6,7 @@
   "price": 79.99,
   "stock_quantity": 50,
   "is_available": 1,
-  "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&h=400&fit=crop"
+  "image": "/assets/store/images/products/headphones.jpg"
  },
  {
   "doctype": "Store Product",
@@ -15,7 +15,7 @@
   "price": 12.49,
   "stock_quantity": 120,
   "is_available": 1,
-  "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=600&h=400&fit=crop"
+  "image": "/assets/store/images/products/green-tea.jpg"
  },
  {
   "doctype": "Store Product",
@@ -24,7 +24,7 @@
   "price": 299.00,
   "stock_quantity": 15,
   "is_available": 1,
-  "image": "https://images.unsplash.com/photo-1592078615290-033ee584e267?w=600&h=400&fit=crop"
+  "image": "/assets/store/images/products/office-chair.jpg"
  },
  {
   "doctype": "Store Product",
@@ -33,7 +33,7 @@
   "price": 24.99,
   "stock_quantity": 200,
   "is_available": 1,
-  "image": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?w=600&h=400&fit=crop"
+  "image": "/assets/store/images/products/water-bottle.jpg"
  },
  {
   "doctype": "Store Product",
@@ -42,7 +42,7 @@
   "price": 45.00,
   "stock_quantity": 80,
   "is_available": 1,
-  "image": "https://images.unsplash.com/photo-1507473885765-e6ed057ab6fe?w=600&h=400&fit=crop"
+  "image": "/assets/store/images/products/desk-lamp.jpg"
  },
  {
   "doctype": "Store Product",
@@ -51,7 +51,7 @@
   "price": 59.99,
   "stock_quantity": 35,
   "is_available": 1,
-  "image": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&h=400&fit=crop"
+  "image": "/assets/store/images/products/backpack.jpg"
  },
  {
   "doctype": "Store Product",
@@ -60,7 +60,7 @@
   "price": 89.99,
   "stock_quantity": 40,
   "is_available": 1,
-  "image": "https://images.unsplash.com/photo-1618384887929-16ec33fab9ef?w=600&h=400&fit=crop"
+  "image": "/assets/store/images/products/keyboard.jpg"
  },
  {
   "doctype": "Store Product",
@@ -69,6 +69,6 @@
   "price": 34.99,
   "stock_quantity": 60,
   "is_available": 1,
-  "image": "https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?w=600&h=400&fit=crop"
+  "image": "/assets/store/images/products/yoga-mat.jpg"
  }
 ]
