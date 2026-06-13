@@ -1,6 +1,7 @@
 {
+ "doctype": "DocType",
  "name": "Store Customer",
- "module": "Store",
+ "module": "Store App",
  "custom": 0,
  "autoname": "field:customer_name",
  "fields": [
