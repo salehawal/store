@@ -5,10 +5,12 @@ import os
 
 def after_install():
     """Load demo fixtures from JSON files after app installation."""
-    fixtures_dir = frappe.get_app_path("store", "fixtures")
+    # Fixtures are in store/store/store/fixtures/ relative to the app root
+    # so resolve relative to this file (which is in store/store/)
+    fixtures_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "store", "fixtures")
 
     if not os.path.exists(fixtures_dir):
-        print("Store: Fixtures directory not found - skipping demo data import.")
+        print(f"Store: Fixtures directory not found at {fixtures_dir} - skipping demo data import.")
         return
 
     # Order matters: Products first, then Customers, then Orders (depends on both)
