@@ -2,9 +2,43 @@ import json
 import frappe
 from frappe import _
 
+def seed_demo_data():
+    """Seed demo products, customers, and orders if the database is empty."""
+    if frappe.db.count("Store Product") > 0:
+        return
+
+    fixtures_dir = frappe.get_app_path("store", "store", "fixtures")
+
+    # Order matters: Products first, then Customers, then Orders
+    for filename in ("store_product.json", "store_customer.json", "store_order.json"):
+        filepath = frappe.get_app_path("store", "store", "fixtures", filename)
+        if not filepath or not frappe.db.exists("File", filepath):
+            # Fallback to direct path
+            import os
+            filepath = os.path.join(fixtures_dir, filename)
+
+        if not os.path.exists(filepath):
+            continue
+
+        with open(filepath) as f:
+            records = json.load(f)
+
+        for record in records:
+            doctype = record.get("doctype")
+            if not doctype:
+                continue
+            try:
+                doc = frappe.get_doc(record)
+                doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
+            except Exception as e:
+                print(f"Store: Failed to import {doctype} fixture: {e}")
+
 
 def get_context(context):
     """Populate the store page context with products."""
+    # Seed demo data if the system is empty
+    seed_demo_data()
+
     context.products = frappe.get_all(
         "Store Product",
         fields=["name", "product_name", "description", "price", "image", "stock_quantity"],

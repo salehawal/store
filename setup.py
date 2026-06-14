@@ -22,6 +22,8 @@ setup(
             "store/doctype/*/*.js",
             "store/doctype/*/*.css",
             "store/fixtures/*",
+            "public/images/*",
+            "public/images/**/*",
         ]
     },
     install_requires=install_requires,
