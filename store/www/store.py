@@ -26,7 +26,7 @@ def seed_demo_data():
     if frappe.db.count("Store Product") > 0:
         return
 
-    # Note: inner store/ package adds an extra level: store/store/store/fixtures/
+    # Note: inner store/ package adds an extra level: store/store/fixtures/
     fixtures_dir = frappe.get_app_path("store", "store", "fixtures")
 
     # Order matters: Products first, then Customers, then Orders
