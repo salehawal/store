@@ -17,7 +17,6 @@
     page: 1,
     pageSize: 20,
     activeCategory: null,
-    search: "",
     cart: JSON.parse(localStorage.getItem("store_cart") || "[]"),
     drawerMode: null, // "cart" | "auth" | "product" | "success"
     selectedProduct: null,
@@ -174,12 +173,11 @@
       <nav class="store-nav" role="navigation">
         <div class="store-nav-inner">
           <span class="store-logo" id="nav-logo">${esc(state.settings.store_name || "Store")}</span>
-          <div class="store-search-wrap">
-            <i class="ti ti-search" aria-hidden="true"></i>
-            <input class="store-search" id="search-input" type="search"
-              placeholder="Search products\u2026" value="${esc(state.search)}" aria-label="Search products">
-          </div>
           <div class="store-nav-actions">
+            <button class="btn-nav-link" id="btn-login" aria-label="Login">
+              <i class="ti ti-user" aria-hidden="true"></i>
+              Login
+            </button>
             <button class="btn-cart" id="btn-cart" aria-label="Open cart">
               <i class="ti ti-shopping-cart" aria-hidden="true"></i>
               Cart
@@ -242,7 +240,7 @@
         </div>
         <div class="state-empty">
           <i class="ti ti-package-off" aria-hidden="true"></i>
-          <p>No products found${state.search ? ` for &quot;${esc(state.search)}&quot;` : ""}.</p>
+          <p>No products found.</p>
         </div>
       `;
     }
@@ -489,28 +487,30 @@
   // ────────────────────────────────────────────────────────────────
   // EVENT BINDING
   // ─────────────────────────────────────────────────────────────────
+  function checkLoginStatus() {
+    if (typeof frappe !== "undefined" && frappe.session && frappe.session.user && frappe.session.user !== "Guest") {
+      const btn = document.getElementById("btn-login");
+      if (btn) {
+        btn.innerHTML = `<i class="ti ti-user-check" aria-hidden="true"></i> ${esc(frappe.session.full_name || frappe.session.user)}`;
+      }
+    }
+  }
+
   function bindNavEvents() {
     document.getElementById("nav-logo")?.addEventListener("click", () => {
       state.activeCategory = null;
-      state.search = "";
       state.page = 1;
       loadProducts();
     });
 
-    const searchInput = document.getElementById("search-input");
-    if (searchInput) {
-      let debounce;
-      searchInput.addEventListener("input", (e) => {
-        clearTimeout(debounce);
-        debounce = setTimeout(() => {
-          state.search = e.target.value;
-          state.page = 1;
-          loadProducts();
-        }, 350);
-      });
-    }
-
     document.getElementById("btn-cart")?.addEventListener("click", openCart);
+    document.getElementById("btn-login")?.addEventListener("click", () => {
+      if (frappe.session && frappe.session.user && frappe.session.user !== "Guest") {
+        window.location.href = "/logout";
+      } else {
+        window.location.href = "/login?redirect-to=/store";
+      }
+    });
   }
 
   function bindSidebarEvents() {
@@ -524,6 +524,9 @@
         if (e.key === "Enter" || e.key === " ") el.click();
       });
     });
+
+    // Show login button as user name if already logged in
+    checkLoginStatus();
   }
 
   function bindProductEvents() {
@@ -712,7 +715,7 @@
     try {
       const result = await api("get_products", {
         category: state.activeCategory || "",
-        search: state.search,
+        search: "",
         page: state.page,
         page_size: state.pageSize,
       });
