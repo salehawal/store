@@ -33,12 +33,16 @@ def get_context(context):
     """Populate the store page context with products."""
     seed_demo_data()
 
-    context.products = frappe.get_all(
+    products = frappe.get_all(
         "Store Product",
         fields=["name", "product_name", "description", "price", "image", "stock_quantity"],
         filters={"is_available": 1},
         order_by="creation desc",
     )
+
+    # Pass products both as a list (for Jinja) and as pre-serialized JSON (for JS SPA)
+    context.products = products
+    context.products_json = json.dumps(products, default=str)
     return context
 
 

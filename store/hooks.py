@@ -30,7 +30,4 @@ fixtures = [
 #   bench --site [sitename] import-fixtures --app store
 after_install = "store.setup.after_install"
 
-# Web routes
-website_route_rules = [
-    {"from_route": "/store", "to_route": "store"}
-]
+# Web routes — rely on automatic www/ template resolution (no explicit rules needed)
