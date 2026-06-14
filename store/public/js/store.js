@@ -1,90 +1,122 @@
 /**
  * ERPNext Store — store.js
  * Vanilla JS SPA served at /store
- * Communicates with ERPNext via frappe.call()
+ * Theme from erpnext-store, adapted for current app backend (store.api.*)
  */
 (function () {
   "use strict";
 
-  // ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────
   // STATE
-  // ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────
   const state = {
+    settings: {},
+    categories: [],
     products: [],
-    cart: JSON.parse(localStorage.getItem("store_cart") || "[]"),
-    drawerMode: null, // "cart" | "checkout" | "success"
-    customerName: sessionStorage.getItem("store_customer_name") || "",
-    customerEmail: sessionStorage.getItem("store_customer_email") || "",
-    customerPhone: "",
-    customerAddress: "",
-    orderName: null,
+    total: 0,
+    page: 1,
+    pageSize: 20,
+    activeCategory: null,
     search: "",
+    cart: JSON.parse(localStorage.getItem("store_cart") || "[]"),
+    drawerMode: null, // "cart" | "auth" | "product" | "success"
+    selectedProduct: null,
+    selectedQty: 1,
+    authTab: "register",
     loading: false,
+    orderName: null,
   };
 
-  // ─────────────────────────────────────────────────────────────
-  // CART HELPERS
-  // ─────────────────────────────────────────────────────────────
-  function saveCart() {
-    localStorage.setItem("store_cart", JSON.stringify(state.cart));
+  // ─────────────────────────────────────────────────────────────────
+  // FRAPPE CALL HELPER
+  // ─────────────────────────────────────────────────────────────────
+  function api(method, args = {}) {
+    return new Promise((resolve, reject) => {
+      frappe.call({
+        method: `store.api.${method}`,
+        args,
+        callback: (r) => {
+          if (r && r.message !== undefined) resolve(r.message);
+          else reject(r);
+        },
+        error: reject,
+      });
+    });
   }
 
-  function cartCount() {
-    return state.cart.reduce((s, i) => s + i.qty, 0);
+  // ─────────────────────────────────────────────────────────────────
+  // CART HELPERS
+  // ─────────────────────────────────────────────────────────────────
+  function saveCart() {
+    localStorage.setItem("store_cart", JSON.stringify(state.cart));
   }
 
   function cartTotal() {
     return state.cart.reduce((s, i) => s + i.price * i.qty, 0);
   }
 
-  function addToCart(product, qty) {
-    qty = qty || 1;
-    const existing = state.cart.find((i) => i.name === product.name);
+  function cartCount() {
+    return state.cart.reduce((s, i) => s + i.qty, 0);
+  }
+
+  function addToCart(product, qty = 1) {
+    const existing = state.cart.find((i) => i.item_code === product.name);
     if (existing) {
       existing.qty += qty;
     } else {
       state.cart.push({
-        name: product.name,
-        product_name: product.product_name,
+        item_code: product.name,
+        item_name: product.item_name,
         price: product.price,
+        currency: product.currency,
         image: product.image,
         qty,
       });
     }
     saveCart();
     renderCartCount();
-    toast(`Added "${product.product_name}" to cart`);
+    toast(`Added "${product.item_name}" to cart`, "ti-shopping-cart");
   }
 
-  function removeFromCart(name) {
-    state.cart = state.cart.filter((i) => i.name !== name);
+  function removeFromCart(itemCode) {
+    state.cart = state.cart.filter((i) => i.item_code !== itemCode);
     saveCart();
     renderCartCount();
-    if (state.drawerMode === "cart") renderDrawerContent();
+    renderCartItems();
   }
 
-  function changeQty(name, delta) {
-    const item = state.cart.find((i) => i.name === name);
+  function changeQty(itemCode, delta) {
+    const item = state.cart.find((i) => i.item_code === itemCode);
     if (!item) return;
     item.qty = Math.max(1, item.qty + delta);
     saveCart();
     renderCartCount();
-    if (state.drawerMode === "cart") renderDrawerContent();
+    renderCartItems();
   }
 
-  // ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────
   // FORMATTERS
-  // ─────────────────────────────────────────────────────────────
-  function formatPrice(price) {
-    return "$" + Number(price).toFixed(2);
+  // ─────────────────────────────────────────────────────────────────
+  function formatPrice(price, currency) {
+    const cur = currency || state.settings.currency || "USD";
+    return new Intl.NumberFormat(undefined, { style: "currency", currency: cur }).format(price);
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // TOAST
-  // ─────────────────────────────────────────────────────────────
-  let toastTimer;
+  function esc(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 
-  function toast(msg) {
+  // ─────────────────────────────────────────────────────────────────
+  // TOAST
+  // ─────────────────────────────────────────────────────────────────
+  let toastTimer;
+  function toast(msg, icon = "ti-check") {
     let el = document.getElementById("store-toast");
     if (!el) {
       el = document.createElement("div");
@@ -92,28 +124,48 @@
       el.className = "store-toast";
       document.body.appendChild(el);
     }
-    el.innerHTML = `<i class="ti ti-check" aria-hidden="true"></i> ${msg}`;
+    el.innerHTML = `<i class="ti ${icon}" aria-hidden="true"></i> ${msg}`;
     el.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => el.classList.remove("show"), 3000);
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────
+  // RENDER HELPERS
+  // ─────────────────────────────────────────────────────────────────
+  function renderCartCount() {
+    const el = document.getElementById("cart-count");
+    if (el) el.textContent = cartCount();
+  }
+
+  function productImage(product) {
+    if (product.image) {
+      return `<img src="${esc(product.image)}" alt="${esc(product.item_name)}" loading="lazy">`;
+    }
+    return `<div class="product-img-placeholder"><i class="ti ti-photo-off" aria-hidden="true"></i></div>`;
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // MAIN RENDER
+  // ─────────────────────────────────────────────────────────────────
   function render() {
     const app = document.getElementById("store-app");
     app.innerHTML = `
       ${renderNav()}
       ${renderHero()}
       <div class="store-body">
+        ${renderSidebar()}
         <main class="store-main">
           ${renderProductsSection()}
         </main>
       </div>
+      ${renderOverlay()}
+      ${renderDrawer()}
     `;
     bindNavEvents();
+    bindSidebarEvents();
     bindProductEvents();
+    bindDrawerEvents();
     renderCartCount();
   }
 
@@ -121,7 +173,7 @@
     return `
       <nav class="store-nav" role="navigation">
         <div class="store-nav-inner">
-          <span class="store-logo" id="nav-logo">Store</span>
+          <span class="store-logo" id="nav-logo">${esc(state.settings.store_name || "Store")}</span>
           <div class="store-search-wrap">
             <i class="ti ti-search" aria-hidden="true"></i>
             <input class="store-search" id="search-input" type="search"
@@ -130,7 +182,7 @@
           <div class="store-nav-actions">
             <button class="btn-cart" id="btn-cart" aria-label="Open cart">
               <i class="ti ti-shopping-cart" aria-hidden="true"></i>
-              <span>Cart</span>
+              Cart
               <span class="cart-count" id="cart-count">${cartCount()}</span>
             </button>
           </div>
@@ -140,122 +192,137 @@
   }
 
   function renderHero() {
+    if (state.activeCategory) return "";
     return `
       <div class="store-hero">
-        <h1>Welcome to Our Store</h1>
-        <p>Browse our products and place an order online.</p>
+        <h1>${esc(state.settings.store_name || "Welcome to Our Store")}</h1>
+        ${state.settings.store_tagline ? `<p>${esc(state.settings.store_tagline)}</p>` : ""}
       </div>
+    `;
+  }
+
+  function renderSidebar() {
+    const items = state.categories.map((cat) => `
+      <li class="category-item ${state.activeCategory === cat.name ? "active" : ""}"
+          data-category="${esc(cat.name)}" role="button" tabindex="0"
+          aria-pressed="${state.activeCategory === cat.name}">
+        <i class="ti ${cat.icon || "ti-tag"}" aria-hidden="true"></i>
+        ${esc(cat.category_name)}
+      </li>
+    `).join("");
+
+    return `
+      <aside class="store-sidebar">
+        <p class="sidebar-title">Categories</p>
+        <ul class="category-list" role="list">
+          <li class="category-item ${!state.activeCategory ? "active" : ""}"
+              data-category="" role="button" tabindex="0">
+            <i class="ti ti-layout-grid" aria-hidden="true"></i>
+            All Products
+          </li>
+          ${items}
+        </ul>
+      </aside>
     `;
   }
 
   function renderProductsSection() {
+    const catLabel = state.activeCategory
+      ? (state.categories.find((c) => c.name === state.activeCategory)?.category_name || state.activeCategory)
+      : "All Products";
+
     if (state.loading) {
       return `<div class="store-loading"><div class="loading-spinner"></div><p>Loading products\u2026</p></div>`;
     }
 
-    let products = state.products;
-    if (state.search) {
-      const q = state.search.toLowerCase();
-      products = products.filter(
-        (p) =>
-          p.product_name.toLowerCase().includes(q) ||
-          (p.description && p.description.toLowerCase().includes(q))
-      );
-    }
-
-    if (products.length === 0) {
-      const label = state.search ? ` for &quot;${esc(state.search)}&quot;` : "";
+    if (state.products.length === 0) {
       return `
         <div class="products-header">
-          <h2>All Products</h2>
-          <span class="products-count">0 products</span>
+          <h2>${esc(catLabel)}</h2>
         </div>
         <div class="state-empty">
           <i class="ti ti-package-off" aria-hidden="true"></i>
-          <p>No products found${label}.</p>
+          <p>No products found${state.search ? ` for &quot;${esc(state.search)}&quot;` : ""}.</p>
         </div>
       `;
     }
 
-    const cards = products
-      .map(
-        (p) => `
-        <article class="product-card" data-item="${esc(p.name)}" tabindex="0" role="button"
-          aria-label="View ${esc(p.product_name)}">
-          <div class="product-img">
-            ${productImage(p)}
+    const cards = state.products.map((p) => `
+      <article class="product-card" data-item="${esc(p.name)}" tabindex="0" role="button"
+               aria-label="View ${esc(p.item_name)}">
+        <div class="product-img">${productImage(p)}</div>
+        <div class="product-info">
+          <p class="product-name">${esc(p.item_name)}</p>
+          <p class="product-group">${esc(p.item_group || "")}</p>
+          <div class="product-footer">
+            <span class="product-price">${formatPrice(p.price, p.currency)}</span>
+            <button class="btn-add" data-item="${esc(p.name)}" aria-label="Add ${esc(p.item_name)} to cart">
+              <i class="ti ti-plus" aria-hidden="true"></i>
+            </button>
           </div>
-          <div class="product-info">
-            <p class="product-name">${esc(p.product_name)}</p>
-            <p class="product-desc">${esc(p.description || "")}</p>
-            <div class="product-footer">
-              <span class="product-price">${formatPrice(p.price)}</span>
-              <button class="btn-add" data-item="${esc(p.name)}" aria-label="Add ${esc(p.product_name)} to cart">
-                <i class="ti ti-plus" aria-hidden="true"></i>
-              </button>
-            </div>
-          </div>
-        </article>
-      `
-      )
-      .join("");
+        </div>
+      </article>
+    `).join("");
+
+    const totalPages = Math.ceil(state.total / state.pageSize);
+    const pagination = totalPages > 1 ? renderPagination(totalPages) : "";
 
     return `
       <div class="products-header">
-        <h2>All Products</h2>
-        <span class="products-count">${products.length} product${products.length !== 1 ? "s" : ""}</span>
+        <h2>${esc(catLabel)}</h2>
+        <span class="products-count">${state.total} product${state.total !== 1 ? "s" : ""}</span>
       </div>
       <div class="product-grid" role="list">${cards}</div>
+      ${pagination}
     `;
   }
 
-  function productImage(product) {
-    if (product.image) {
-      return `<img src="${esc(product.image)}" alt="${esc(product.product_name)}" loading="lazy">`;
+  function renderPagination(totalPages) {
+    const pages = [];
+    for (let i = 1; i <= totalPages; i++) {
+      pages.push(`
+        <button class="page-btn ${i === state.page ? "active" : ""}"
+                data-page="${i}" ${i === state.page ? "aria-current='page'" : ""}>
+          ${i}
+        </button>
+      `);
     }
-    return `<div class="product-img-placeholder"><i class="ti ti-photo-off" aria-hidden="true"></i></div>`;
+    return `
+      <nav class="pagination" aria-label="Pagination">
+        <button class="page-btn" data-page="${state.page - 1}" ${state.page === 1 ? "disabled" : ""}>
+          <i class="ti ti-chevron-left" aria-hidden="true"></i>
+        </button>
+        ${pages.join("")}
+        <button class="page-btn" data-page="${state.page + 1}" ${state.page === totalPages ? "disabled" : ""}>
+          <i class="ti ti-chevron-right" aria-hidden="true"></i>
+        </button>
+      </nav>
+    `;
   }
 
-  function esc(str) {
-    if (!str) return "";
-    return str
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
+  // ─────────────────────────────────────────────────────────────────
+  // DRAWER
+  // ─────────────────────────────────────────────────────────────────
+  function renderOverlay() {
+    return `<div class="store-overlay ${state.drawerMode ? "open" : ""}" id="store-overlay"></div>`;
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // DRAWER RENDERING
-  // ─────────────────────────────────────────────────────────────
-  function renderDrawerContent() {
-    const drawer = document.getElementById("store-drawer");
-    const overlay = document.getElementById("store-overlay");
-    if (!drawer) return;
-
+  function renderDrawer() {
     if (!state.drawerMode) {
-      drawer.className = "store-drawer";
-      drawer.innerHTML = "";
-      if (overlay) overlay.className = "store-overlay";
-      return;
+      return `<div class="store-drawer" id="store-drawer"></div>`;
     }
+    const content = {
+      cart: renderCartDrawer,
+      auth: renderAuthDrawer,
+      product: renderProductDrawer,
+      success: renderSuccessDrawer,
+    }[state.drawerMode];
 
-    drawer.className = "store-drawer open";
-    if (overlay) overlay.className = "store-overlay open";
-
-    switch (state.drawerMode) {
-      case "cart":
-        drawer.innerHTML = renderCartDrawer();
-        break;
-      case "checkout":
-        drawer.innerHTML = renderCheckoutDrawer();
-        break;
-      case "success":
-        drawer.innerHTML = renderSuccessDrawer();
-        break;
-    }
-    bindDrawerEvents();
+    return `
+      <div class="store-drawer open" id="store-drawer" role="dialog" aria-modal="true">
+        ${content ? content() : ""}
+      </div>
+    `;
   }
 
   function renderCartDrawer() {
@@ -267,12 +334,10 @@
           <i class="ti ti-x"></i>
         </button>
       </div>
-      <div class="drawer-body">
+      <div class="drawer-body" id="cart-items-wrap">
         ${hasItems ? renderCartItems() : renderCartEmpty()}
       </div>
-      ${
-        hasItems
-          ? `
+      ${hasItems ? `
         <div class="drawer-footer">
           <div class="cart-summary">
             <div class="cart-summary-row cart-total">
@@ -284,9 +349,7 @@
             Proceed to Checkout
           </button>
         </div>
-      `
-          : ""
-      }
+      ` : ""}
     `;
   }
 
@@ -300,39 +363,32 @@
   }
 
   function renderCartItems() {
-    return state.cart
-      .map(
-        (item) => `
-      <div class="cart-item" data-item="${esc(item.name)}">
+    return state.cart.map((item) => `
+      <div class="cart-item" data-item="${esc(item.item_code)}">
         <div class="cart-item-img">
-          ${
-            item.image
-              ? `<img src="${esc(item.image)}" alt="${esc(item.product_name)}">`
-              : `<i class="ti ti-photo-off" style="font-size:24px;color:#d1d5db"></i>`
-          }
+          ${item.image ? `<img src="${esc(item.image)}" alt="${esc(item.item_name)}">` : `<i class="ti ti-photo-off" style="font-size:24px;color:#d1d5db"></i>`}
         </div>
         <div class="cart-item-info">
-          <p class="cart-item-name">${esc(item.product_name)}</p>
-          <p class="cart-item-price">${formatPrice(item.price)} each</p>
+          <p class="cart-item-name">${esc(item.item_name)}</p>
+          <p class="cart-item-price">${formatPrice(item.price, item.currency)} each</p>
           <div class="cart-item-controls">
-            <button class="qty-btn" data-action="decrease" data-item="${esc(item.name)}" aria-label="Decrease quantity">\u2212</button>
+            <button class="qty-btn" data-action="decrease" data-item="${esc(item.item_code)}" aria-label="Decrease quantity">\u2212</button>
             <span class="qty-val">${item.qty}</span>
-            <button class="qty-btn" data-action="increase" data-item="${esc(item.name)}" aria-label="Increase quantity">+</button>
-            <button class="btn-remove" data-action="remove" data-item="${esc(item.name)}" aria-label="Remove item">
+            <button class="qty-btn" data-action="increase" data-item="${esc(item.item_code)}" aria-label="Increase quantity">+</button>
+            <button class="btn-remove" data-action="remove" data-item="${esc(item.item_code)}" aria-label="Remove item">
               <i class="ti ti-trash"></i>
             </button>
           </div>
         </div>
         <div style="text-align:right;font-weight:700;font-size:14px;white-space:nowrap">
-          ${formatPrice(item.price * item.qty)}
+          ${formatPrice(item.price * item.qty, item.currency)}
         </div>
       </div>
-    `
-      )
-      .join("");
+    `).join("");
   }
 
-  function renderCheckoutDrawer() {
+  function renderAuthDrawer() {
+    const isRegister = state.authTab === "register";
     return `
       <div class="drawer-header">
         <h3>Checkout</h3>
@@ -341,34 +397,69 @@
         </button>
       </div>
       <div class="drawer-body">
-        <form id="checkout-form" novalidate>
+        ${isRegister ? renderCheckoutForm() : renderCheckoutForm()}
+      </div>
+    `;
+  }
+
+  function renderCheckoutForm() {
+    return `
+      <form id="checkout-form" novalidate>
+        <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="cust-name">Name *</label>
-            <input class="form-input" id="cust-name" type="text" required
-              placeholder="Your name" value="${esc(state.customerName)}">
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="cust-email">Email *</label>
-            <input class="form-input" id="cust-email" type="email" required
-              placeholder="your@email.com" value="${esc(state.customerEmail)}">
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label class="form-label" for="cust-phone">Phone</label>
-              <input class="form-input" id="cust-phone" type="tel"
-                placeholder="+1 234 567 8900" value="${esc(state.customerPhone)}">
-            </div>
+            <label class="form-label" for="reg-first">First name</label>
+            <input class="form-input" id="reg-first" name="first_name" type="text" required placeholder="Jane">
           </div>
           <div class="form-group">
-            <label class="form-label" for="cust-address">Address</label>
-            <textarea class="form-input" id="cust-address" rows="2"
-              placeholder="Street, city, zip">${esc(state.customerAddress)}</textarea>
+            <label class="form-label" for="reg-last">Last name</label>
+            <input class="form-input" id="reg-last" name="last_name" type="text" required placeholder="Smith">
           </div>
-          <div id="checkout-error" class="form-error" style="display:none"></div>
-          <button type="submit" class="btn-primary" style="width:100%;padding:14px;margin-top:8px" id="btn-place-order">
-            <i class="ti ti-check" aria-hidden="true"></i> Place Order
-          </button>
-        </form>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-email">Email</label>
+          <input class="form-input" id="reg-email" name="email" type="email" required placeholder="jane@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reg-phone">Phone</label>
+          <input class="form-input" id="reg-phone" name="phone" type="tel" placeholder="+1 555 000 0000">
+        </div>
+        <div id="auth-error" class="form-error" style="display:none"></div>
+        <button type="submit" class="btn-primary" style="width:100%;padding:14px;margin-top:8px" id="btn-submit-auth">
+          Place Order
+        </button>
+        <p class="form-hint" style="text-align:center;margin-top:12px">
+          Your order will be placed immediately. No account required.
+        </p>
+      </form>
+    `;
+  }
+
+  function renderProductDrawer() {
+    const p = state.selectedProduct;
+    if (!p) return "";
+    return `
+      <div class="drawer-header">
+        <h3 style="font-size:15px">${esc(p.item_name)}</h3>
+        <button class="btn-close" id="btn-close-drawer" aria-label="Close">
+          <i class="ti ti-x"></i>
+        </button>
+      </div>
+      <div class="drawer-body">
+        ${p.image
+          ? `<div class="product-detail-img"><img src="${esc(p.image)}" alt="${esc(p.item_name)}"></div>`
+          : `<div class="product-detail-img-ph"><i class="ti ti-photo-off" aria-hidden="true"></i></div>`}
+        <p class="product-detail-name">${esc(p.item_name)}</p>
+        <p class="product-detail-group">${esc(p.item_group || "")}</p>
+        <p class="product-detail-price">${formatPrice(p.price, p.currency)}</p>
+        ${p.description ? `<p class="product-detail-desc">${esc(p.description)}</p>` : ""}
+        <div class="qty-selector">
+          <label for="detail-qty">Quantity</label>
+          <input class="qty-input" id="detail-qty" type="number" min="1" value="${state.selectedQty}">
+        </div>
+        <button class="btn-primary" id="btn-add-to-cart-detail" style="width:100%;padding:14px">
+          <i class="ti ti-shopping-cart-plus" aria-hidden="true"></i>
+          Add to Cart \u2014 ${formatPrice(p.price * state.selectedQty, p.currency)}
+        </button>
       </div>
     `;
   }
@@ -396,14 +487,15 @@
     `;
   }
 
-  // ─────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────────────
   // EVENT BINDING
-  // ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────
   function bindNavEvents() {
     document.getElementById("nav-logo")?.addEventListener("click", () => {
+      state.activeCategory = null;
       state.search = "";
-      document.getElementById("search-input").value = "";
-      renderProductsSectionIntoMain();
+      state.page = 1;
+      loadProducts();
     });
 
     const searchInput = document.getElementById("search-input");
@@ -413,14 +505,25 @@
         clearTimeout(debounce);
         debounce = setTimeout(() => {
           state.search = e.target.value;
-          renderProductsSectionIntoMain();
-        }, 300);
+          state.page = 1;
+          loadProducts();
+        }, 350);
       });
     }
 
-    document.getElementById("btn-cart")?.addEventListener("click", () => {
-      state.drawerMode = "cart";
-      renderDrawerContent();
+    document.getElementById("btn-cart")?.addEventListener("click", openCart);
+  }
+
+  function bindSidebarEvents() {
+    document.querySelectorAll(".category-item").forEach((el) => {
+      el.addEventListener("click", () => {
+        state.activeCategory = el.dataset.category || null;
+        state.page = 1;
+        loadProducts();
+      });
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") el.click();
+      });
     });
   }
 
@@ -428,181 +531,248 @@
     document.querySelectorAll(".product-card").forEach((el) => {
       el.addEventListener("click", (e) => {
         if (e.target.closest(".btn-add")) return;
+        openProductDetail(el.dataset.item);
       });
       el.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") el.click();
+        if (e.key === "Enter") openProductDetail(el.dataset.item);
       });
     });
 
     document.querySelectorAll(".btn-add").forEach((btn) => {
       btn.addEventListener("click", (e) => {
         e.stopPropagation();
-        const name = btn.dataset.item;
-        const product = state.products.find((p) => p.name === name);
+        const itemCode = btn.dataset.item;
+        const product = state.products.find((p) => p.name === itemCode);
         if (product) addToCart(product, 1);
+      });
+    });
+
+    document.querySelectorAll(".page-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const p = parseInt(btn.dataset.page);
+        if (!isNaN(p) && p !== state.page) {
+          state.page = p;
+          loadProducts();
+        }
       });
     });
   }
 
   function bindDrawerEvents() {
-    const drawer = document.getElementById("store-drawer");
-    if (!drawer) return;
+    document.getElementById("store-overlay")?.addEventListener("click", closeDrawer);
+    document.getElementById("btn-close-drawer")?.addEventListener("click", closeDrawer);
 
-    // Bind drawer delegation once — guard with dataset flag
-    if (!drawer.dataset.bound) {
-      drawer.dataset.bound = "true";
-      drawer.addEventListener("click", (e) => {
-        const target = e.target.closest("[data-action], #btn-close-drawer, #btn-checkout, #btn-continue-shopping");
-        if (!target) return;
-
-        if (target.id === "btn-close-drawer" || target.closest("#btn-close-drawer")) {
-          closeDrawer();
-        } else if (target.id === "btn-checkout") {
-          state.drawerMode = "checkout";
-          renderDrawerContent();
-        } else if (target.id === "btn-continue-shopping") {
-          closeDrawer();
-        } else if (target.dataset.action === "increase") {
-          changeQty(target.dataset.item, 1);
-        } else if (target.dataset.action === "decrease") {
-          changeQty(target.dataset.item, -1);
-        } else if (target.dataset.action === "remove") {
-          removeFromCart(target.dataset.item);
-        }
+    document.querySelectorAll(".qty-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const code = btn.dataset.item;
+        if (btn.dataset.action === "increase") changeQty(code, 1);
+        else changeQty(code, -1);
       });
-    }
+    });
 
-    document.getElementById("store-overlay")?.addEventListener("click", closeDrawer, { once: true });
+    document.querySelectorAll("[data-action='remove']").forEach((btn) => {
+      btn.addEventListener("click", () => removeFromCart(btn.dataset.item));
+    });
+
+    document.getElementById("btn-checkout")?.addEventListener("click", () => {
+      state.drawerMode = "auth";
+      state.authTab = "register";
+      updateDrawer();
+    });
+
     document.getElementById("checkout-form")?.addEventListener("submit", handlePlaceOrder);
+
+    document.getElementById("detail-qty")?.addEventListener("input", (e) => {
+      state.selectedQty = Math.max(1, parseInt(e.target.value) || 1);
+      const btn = document.getElementById("btn-add-to-cart-detail");
+      if (btn && state.selectedProduct) {
+        btn.innerHTML = `<i class="ti ti-shopping-cart-plus" aria-hidden="true"></i> Add to Cart \u2014 ${formatPrice(state.selectedProduct.price * state.selectedQty, state.selectedProduct.currency)}`;
+      }
+    });
+
+    document.getElementById("btn-add-to-cart-detail")?.addEventListener("click", () => {
+      if (state.selectedProduct) {
+        addToCart(state.selectedProduct, state.selectedQty);
+        closeDrawer();
+      }
+    });
+
+    document.getElementById("btn-continue-shopping")?.addEventListener("click", closeDrawer);
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // DRAWER MANAGEMENT
-  // ─────────────────────────────────────────────────────────────
+  // ─────────────────────────────────────────────────────────────────
+  // DRAWER STATE MANAGEMENT
+  // ─────────────────────────────────────────────────────────────────
+  function openCart() {
+    state.drawerMode = "cart";
+    updateDrawer();
+  }
+
   function closeDrawer() {
     state.drawerMode = null;
-    renderDrawerContent();
+    updateDrawer();
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // PLACE ORDER
-  // ─────────────────────────────────────────────────────────────
-  function showCheckoutError(msg) {
-    const el = document.getElementById("checkout-error");
-    if (el) {
-      el.textContent = msg;
-      el.style.display = "block";
+  function updateDrawer() {
+    const overlay = document.getElementById("store-overlay");
+    const drawer = document.getElementById("store-drawer");
+    if (overlay) {
+      overlay.className = `store-overlay ${state.drawerMode ? "open" : ""}`;
+    }
+    if (drawer) {
+      if (state.drawerMode) {
+        const content = {
+          cart: renderCartDrawer,
+          auth: renderAuthDrawer,
+          product: renderProductDrawer,
+          success: renderSuccessDrawer,
+        }[state.drawerMode];
+        drawer.innerHTML = content ? content() : "";
+        drawer.className = "store-drawer open";
+      } else {
+        drawer.innerHTML = "";
+        drawer.className = "store-drawer";
+      }
+      bindDrawerEvents();
     }
   }
 
-  function setOrderButtonLoading(loading) {
-    const btn = document.getElementById("btn-place-order");
+  async function openProductDetail(itemCode) {
+    state.selectedQty = 1;
+    let product = state.products.find((p) => p.name === itemCode);
+    if (!product) {
+      try {
+        product = await api("get_product", { item_code: itemCode });
+      } catch (e) {
+        toast("Could not load product details.", "ti-alert-circle");
+        return;
+      }
+    }
+    state.selectedProduct = product;
+    state.drawerMode = "product";
+    updateDrawer();
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+  // CHECKOUT HANDLER
+  // ─────────────────────────────────────────────────────────────────
+  function showAuthError(msg) {
+    const el = document.getElementById("auth-error");
+    if (el) { el.textContent = msg; el.style.display = "block"; }
+  }
+
+  function setSubmitLoading(loading) {
+    const btn = document.getElementById("btn-submit-auth");
     if (btn) {
       btn.disabled = loading;
-      btn.innerHTML = loading
-        ? '<i class="ti ti-loader" aria-hidden="true"></i> Placing order\u2026'
-        : '<i class="ti ti-check" aria-hidden="true"></i> Place Order';
+      btn.textContent = loading ? "Placing order\u2026" : "Place Order";
     }
   }
 
   async function handlePlaceOrder(e) {
     e.preventDefault();
-    const name = document.getElementById("cust-name")?.value?.trim();
-    const email = document.getElementById("cust-email")?.value?.trim();
-    const phone = document.getElementById("cust-phone")?.value?.trim();
-    const address = document.getElementById("cust-address")?.value?.trim();
+    const first_name = document.getElementById("reg-first")?.value?.trim();
+    const last_name = document.getElementById("reg-last")?.value?.trim();
+    const email = document.getElementById("reg-email")?.value?.trim();
+    const phone = document.getElementById("reg-phone")?.value?.trim();
 
-    if (!name || !email) {
-      showCheckoutError("Please enter your name and email.");
-      return;
-    }
-    if (state.cart.length === 0) {
-      showCheckoutError("Your cart is empty.");
+    if (!first_name || !last_name || !email) {
+      showAuthError("Please fill in name and email.");
       return;
     }
 
-    state.customerName = name;
-    state.customerEmail = email;
-    sessionStorage.setItem("store_customer_name", name);
-    sessionStorage.setItem("store_customer_email", email);
-
-    setOrderButtonLoading(true);
-
+    setSubmitLoading(true);
     try {
-      const result = await new Promise((resolve, reject) => {
-        frappe.call({
-          method: "store.www.store.place_order",
-          args: {
-            customer_name: name,
-            customer_email: email,
-            phone: phone || "",
-            address: address || "",
-            items: state.cart,
-          },
-          callback: (r) => {
-            if (r.message && r.message.status === "ok") resolve(r.message);
-            else reject(new Error(r.message?.error || "Something went wrong."));
-          },
-          error: reject,
-        });
+      const result = await api("register_and_place_order", {
+        first_name,
+        last_name,
+        email,
+        phone: phone || "",
+        password: "", // not used by backend
+        cart_items: JSON.stringify(state.cart.map((i) => ({ item_code: i.item_code, qty: i.qty }))),
       });
-
       state.orderName = result.order_name;
       state.cart = [];
       saveCart();
       state.drawerMode = "success";
-      renderDrawerContent();
-      renderCartCount();
+      updateDrawer();
     } catch (err) {
-      showCheckoutError(err.message || "Something went wrong. Please try again.");
+      showAuthError(err?.message || "Something went wrong. Please try again.");
     } finally {
-      setOrderButtonLoading(false);
+      setSubmitLoading(false);
     }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // RENDER CART COUNT
-  // ─────────────────────────────────────────────────────────────
-  function renderCartCount() {
-    const el = document.getElementById("cart-count");
-    if (el) el.textContent = cartCount();
+  // ─────────────────────────────────────────────────────────────────
+  // DATA LOADING
+  // ─────────────────────────────────────────────────────────────────
+  async function loadProducts() {
+    state.loading = true;
+    renderMainContent();
+
+    try {
+      const result = await api("get_products", {
+        category: state.activeCategory || "",
+        search: state.search,
+        page: state.page,
+        page_size: state.pageSize,
+      });
+      state.products = result.items;
+      state.total = result.total;
+    } catch (e) {
+      state.products = [];
+      state.total = 0;
+    } finally {
+      state.loading = false;
+      renderMainContent();
+    }
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // PARTIAL RE-RENDER: Main content only
-  // ─────────────────────────────────────────────────────────────
-  function renderProductsSectionIntoMain() {
+  function renderMainContent() {
     const main = document.querySelector(".store-main");
     if (main) {
       main.innerHTML = renderProductsSection();
       bindProductEvents();
     }
+    document.querySelectorAll(".category-item").forEach((el) => {
+      const cat = el.dataset.category;
+      el.classList.toggle("active", cat === (state.activeCategory || ""));
+    });
+    const hero = document.querySelector(".store-hero");
+    if (hero && state.activeCategory) hero.style.display = "none";
+    else if (hero) hero.style.display = "";
   }
 
-  // ─────────────────────────────────────────────────────────────
-  // BOOT
-  // ─────────────────────────────────────────────────────────────
-  function init() {
-    const app = document.getElementById("store-app");
-    if (!app) return;
+  // ─────────────────────────────────────────────────────────────────
+  // RENDER CART COUNT
+  // ─────────────────────────────────────────────────────────────────
+  function renderCartCount() {
+    const el = document.getElementById("cart-count");
+    if (el) el.textContent = cartCount();
+  }
 
-    // If products were rendered server-side via Jinja, extract them
-    const dataEl = document.getElementById("store-data");
-    if (dataEl) {
-      try {
-        state.products = JSON.parse(dataEl.textContent);
-      } catch (e) {
-        state.products = [];
-      }
-      render();
-      return;
+  // ─────────────────────────────────────────────────────────────────
+  // BOOT
+  // ─────────────────────────────────────────────────────────────────
+  async function init() {
+    try {
+      const [settings, categories, productsResult] = await Promise.all([
+        api("get_store_settings"),
+        api("get_categories"),
+        api("get_products", { page: 1, page_size: 20 }),
+      ]);
+
+      state.settings = settings;
+      state.categories = categories;
+      state.products = productsResult.items;
+      state.total = productsResult.total;
+    } catch (e) {
+      console.error("Store init failed:", e);
     }
 
-    // Otherwise show loading
     render();
   }
 
-  // Wait for frappe to be ready
   if (typeof frappe !== "undefined") {
     frappe.ready(init);
   } else {

@@ -9,13 +9,6 @@ app_color = "grey"
 app_email = "store@example.com"
 app_license = "MIT"
 
-app_include_js = "/assets/store/js/store.js"
-app_include_css = "/assets/store/css/store.css"
-
-# Web page assets
-web_include_js = "/assets/store/js/store.js"
-web_include_css = "/assets/store/css/store.css"
-
 website_context = {}
 
 # Fixtures — demo data to load on install (order matters for dependencies)

@@ -1,27 +1,23 @@
 {% extends "templates/web.html" %}
 
+{% block title %}{{ store_name or "Store" }}{% endblock %}
+
 {% block style %}
 {{ super() }}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
-<link type="text/css" rel="stylesheet" href="/assets/store/css/store.css">
+<link rel="stylesheet" href="/assets/store/css/store.css">
 {% endblock %}
 
-{# Full-screen: hide breadcrumbs and page header #}
 {% block breadcrumbs %}{% endblock %}
 {% block header %}{% endblock %}
 
 {% block page_content %}
-<script id="store-data" type="application/json">{{ products_json | safe }}</script>
 <div id="store-app">
   <div id="store-loading" class="store-loading">
     <div class="loading-spinner"></div>
-    <p>{{ _("Loading store\u2026") }}</p>
+    <p>{{ _("Loading store…") }}</p>
   </div>
 </div>
-
-<!-- Overlay + Drawer (rendered by JS) -->
-<div class="store-overlay" id="store-overlay"></div>
-<div class="store-drawer" id="store-drawer"></div>
 {% endblock %}
 
 {% block script %}
