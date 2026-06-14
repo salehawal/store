@@ -4,16 +4,34 @@ from frappe import _
 
 
 def seed_demo_data():
-    """Seed demo products, customers, and orders if the database is empty."""
+    """Seed demo products, customers, and orders if the database is empty.
+    Also patches existing products that are missing images."""
+    fixture_path = frappe.get_app_path("store", "store", "fixtures", "store_product.json")
+
+    # Read fixture images to patch existing products that lack them
+    try:
+        with open(fixture_path) as f:
+            fixture_products = json.load(f)
+        image_map = {p["product_name"]: p["image"] for p in fixture_products if p.get("image")}
+
+        for product_name, image in image_map.items():
+            existing = frappe.db.get_value("Store Product", {"product_name": product_name}, "name")
+            if existing:
+                current_image = frappe.db.get_value("Store Product", existing, "image")
+                if not current_image:
+                    frappe.db.set_value("Store Product", existing, "image", image)
+    except Exception as e:
+        frappe.logger().error(f"Store: Failed to patch product images: {e}")
+
     if frappe.db.count("Store Product") > 0:
         return
 
     # Note: inner store/ package adds an extra level: store/store/store/fixtures/
-    fixtures_dir = frappe.get_app_path("store", "store", "store", "fixtures")
+    fixtures_dir = frappe.get_app_path("store", "store", "fixtures")
 
     # Order matters: Products first, then Customers, then Orders
     for filename in ("store_product.json", "store_customer.json", "store_order.json"):
-        filepath = frappe.get_app_path("store", "store", "store", "fixtures", filename)
+        filepath = frappe.get_app_path("store", "store", "fixtures", filename)
 
         with open(filepath) as f:
             records = json.load(f)
