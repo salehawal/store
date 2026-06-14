@@ -8,12 +8,12 @@ def seed_demo_data():
     if frappe.db.count("Store Product") > 0:
         return
 
-    # Use frappe.get_app_path for correct path resolution regardless of caller
-    fixtures_dir = frappe.get_app_path("store", "store", "fixtures")
+    # Note: inner store/ package adds an extra level: store/store/store/fixtures/
+    fixtures_dir = frappe.get_app_path("store", "store", "store", "fixtures")
 
     # Order matters: Products first, then Customers, then Orders
     for filename in ("store_product.json", "store_customer.json", "store_order.json"):
-        filepath = frappe.get_app_path("store", "store", "fixtures", filename)
+        filepath = frappe.get_app_path("store", "store", "store", "fixtures", filename)
 
         with open(filepath) as f:
             records = json.load(f)
