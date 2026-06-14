@@ -6,6 +6,10 @@
 <link type="text/css" rel="stylesheet" href="/assets/store/css/store.css">
 {% endblock %}
 
+{# Full-screen: hide breadcrumbs and page header #}
+{% block breadcrumbs %}{% endblock %}
+{% block header %}{% endblock %}
+
 {% block page_content %}
 <script id="store-data" type="application/json">{{ products_json | safe }}</script>
 <div id="store-app">

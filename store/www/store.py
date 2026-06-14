@@ -58,6 +58,11 @@ def get_context(context):
         order_by="creation desc",
     )
 
+    # Full-screen responsive layout
+    context.full_width = True
+    context.show_sidebar = 0
+    context.title = "Store"
+
     # Pass products both as a list (for Jinja) and as pre-serialized JSON (for JS SPA)
     context.products = products
     context.products_json = json.dumps(products, default=str)

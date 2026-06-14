@@ -34,3 +34,8 @@ after_install = "store.setup.after_install"
 website_route_rules = [
     {"from_route": "/store", "to_route": "store"}
 ]
+
+# Web redirects — /all-products → /store (legacy navbar link)
+website_redirects = [
+    {"source": "/all-products", "target": "/store"}
+]
