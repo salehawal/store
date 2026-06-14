@@ -154,10 +154,11 @@ def register_and_place_order(first_name, last_name, email, phone, password, cart
 @frappe.whitelist(allow_guest=True)
 def login_and_place_order(email, password, cart_items):
     """Returning customer checkout — falls through to guest checkout."""
-    # Delegate to guest checkout
+    # Delegate to guest checkout with a friendly name
+    name = email.partition("@")[0] if email else "Customer"
     return register_and_place_order(
-        first_name="",
-        last_name=email.partition("@")[0] if email else "Customer",
+        first_name=name,
+        last_name="",
         email=email,
         phone="",
         password=password,

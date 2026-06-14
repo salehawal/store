@@ -388,7 +388,6 @@
   }
 
   function renderAuthDrawer() {
-    const isRegister = state.authTab === "register";
     return `
       <div class="drawer-header">
         <h3>Checkout</h3>
@@ -397,7 +396,7 @@
         </button>
       </div>
       <div class="drawer-body">
-        ${isRegister ? renderCheckoutForm() : renderCheckoutForm()}
+        ${renderCheckoutForm()}
       </div>
     `;
   }
