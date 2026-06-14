@@ -1,5 +1,4 @@
 import json
-import os
 import frappe
 from frappe import _
 
@@ -9,18 +8,12 @@ def seed_demo_data():
     if frappe.db.count("Store Product") > 0:
         return
 
-    fixtures_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "store", "fixtures"
-    )
-
-    if not os.path.exists(fixtures_dir):
-        return
+    # Use frappe.get_app_path for correct path resolution regardless of caller
+    fixtures_dir = frappe.get_app_path("store", "store", "fixtures")
 
     # Order matters: Products first, then Customers, then Orders
     for filename in ("store_product.json", "store_customer.json", "store_order.json"):
-        filepath = os.path.join(fixtures_dir, filename)
-        if not os.path.exists(filepath):
-            continue
+        filepath = frappe.get_app_path("store", "store", "fixtures", filename)
 
         with open(filepath) as f:
             records = json.load(f)
@@ -33,7 +26,7 @@ def seed_demo_data():
                 doc = frappe.get_doc(record)
                 doc.insert(ignore_permissions=True, ignore_if_duplicate=True)
             except Exception as e:
-                print(f"Store: Failed to import {doctype} fixture: {e}")
+                frappe.logger().error(f"Store: Failed to import {doctype} fixture: {e}")
 
 
 def get_context(context):
