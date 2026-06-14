@@ -3,7 +3,7 @@
  "name": "Store Order",
  "module": "Store",
  "custom": 0,
- "autoname": "ORD-",
+ "autoname": "ORD-.#####",
  "fields": [
   {
    "fieldname": "customer",
