@@ -390,7 +390,17 @@
       headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': getCSRFToken(), 'Accept': 'application/json' },
       body: JSON.stringify(data)
     }).then(r => r.json()).then(d => {
-      if (d.exc) { const m = d._server_messages ? JSON.parse(d._server_messages[0]).message : 'Request failed'; throw new Error(m); }
+      if (d.exc) {
+        let msg = 'Request failed';
+        try {
+          // _server_messages is a JSON-encoded string of an array of JSON-encoded messages
+          const raw = JSON.parse(d._server_messages);
+          if (raw && raw.length) {
+            msg = JSON.parse(raw[0]).message || msg;
+          }
+        } catch(e) {}
+        throw new Error(msg);
+      }
       return d.message || d;
     });
   }

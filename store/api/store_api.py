@@ -27,11 +27,21 @@ def _get_company():
     )
 
 
-def _get_warehouse():
-    return (
-        frappe.db.get_value("Warehouse", {"is_group": 0, "disabled": 0}, "name")
-        or frappe.db.get_value("Warehouse", {}, "name")
-    )
+def _get_warehouse(company=None):
+    """Return a non-group, non-disabled warehouse for the given company."""
+    if not company:
+        company = _get_company()
+    # 1. Preferred: non-group, non-disabled warehouse for the company
+    warehouse = frappe.db.get_value("Warehouse", {
+        "is_group": 0, "disabled": 0, "company": company
+    }, "name")
+    if not warehouse:
+        # 2. Fallback: any warehouse for the company
+        warehouse = frappe.db.get_value("Warehouse", {"company": company}, "name")
+    if not warehouse:
+        # 3. Last resort: any warehouse at all
+        warehouse = frappe.db.get_value("Warehouse", {}, "name")
+    return warehouse
 
 
 def _ensure_customer_group():
@@ -176,7 +186,7 @@ def place_order(first_name, last_name, email, phone, cart_items):
 
     # ── 2. Build and insert Sales Order ──
     company = _get_company()
-    warehouse = _get_warehouse()
+    warehouse = _get_warehouse(company)
     delivery_date = frappe.utils.add_days(frappe.utils.today(), 7)
 
     order_items = []
