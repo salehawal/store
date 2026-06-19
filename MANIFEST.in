@@ -1,5 +1,7 @@
 recursive-include store/public *
 recursive-include store/www *
-recursive-include store/templates *
+recursive-include store/setup *
+recursive-include store/api *
+recursive-include store/demo_data *
+recursive-include store/demo_data/images *
 recursive-include store/store/doctype *
-recursive-include store/store/fixtures *

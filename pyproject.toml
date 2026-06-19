@@ -1,3 +1,10 @@
 [build-system]
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta:__legacy__"
+
+[project]
+name = "store"
+version = "0.0.1"
+description = "ERPNext Store App — online ordering at /store"
+requires-python = ">=3.10"
+dependencies = []

@@ -1,5 +1,0 @@
-recursive-include store/public *
-recursive-include store/www *
-recursive-include store/templates *
-recursive-include store/store/doctype *
-recursive-include store/store/fixtures *

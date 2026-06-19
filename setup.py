@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 with open("requirements.txt") as f:
-    install_requires = f.read().strip().split("\n")
+    install_requires = [l for l in f.read().splitlines() if l and not l.startswith("#")]
 
 setup(
     name="store",
@@ -16,14 +16,10 @@ setup(
             "public/**/*",
             "www/*",
             "www/**/*",
-            "templates/*",
-            "templates/**/*",
-            "store/doctype/*/*.json",
-            "store/doctype/*/*.js",
-            "store/doctype/*/*.css",
-            "store/fixtures/*",
-            "public/images/*",
-            "public/images/**/*",
+            "setup/*",
+            "api/*",
+            "demo_data/*",
+            "demo_data/**/*",
         ]
     },
     install_requires=install_requires,
